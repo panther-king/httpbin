@@ -1,36 +1,121 @@
-use std::io::Write;
+use hyper::method::Method;
+use hyper::server::Handler;
 
-use hyper::Get;
-use hyper::header::{ContentLength, ContentType};
-use hyper::mime::{Mime, SubLevel, TopLevel};
-use hyper::server::{Request, Response};
-use hyper::uri::RequestUri;
+pub struct Route<T> {
+    method: Method,
+    path: String,
+    handler: Box<T>,
+}
 
-static INDEX: &'static [u8] = br#"<!doctype html>
-<head>
-  <title>Clone of httpbin.org with Rust</title>
-</head>
-<body>
-  <ul>
-    <li><a href="/">/</a> This page.</li>
-  </ul>
-</body>"#;
+impl<T> Route<T> {
+    /// 自身のルーティングとマッチするか判定する
+    pub fn is_match(&self, method: &Method, path: &str) -> bool {
+        self.method == *method && self.path == path
+    }
+}
 
-pub fn route(req: Request, mut res: Response) {
-    let body = match req.uri {
-        RequestUri::AbsolutePath(ref path) => {
-            match (req.method, &path[..]) {
-                (Get, "/") => INDEX,
-                _ => b"",
-            }
-        }
-        _ => b"",
-    };
+pub struct Router<T> {
+    routes: Vec<Route<T>>,
+}
 
-    res.headers_mut().set(ContentLength(body.len() as u64));
-    res.headers_mut()
-        .set(ContentType(Mime(TopLevel::Text, SubLevel::Html, vec![])));
+impl<T: Handler> Router<T> {
+    pub fn new() -> Router<T> {
+        Router { routes: Vec::new() }
+    }
 
-    let mut res = res.start().unwrap();
-    res.write_all(body).unwrap();
+    /// DELETEメソッドのルーティングを追加する
+    pub fn delete(&mut self, path: &str, handler: T) {
+        self.add_route(Method::Delete, path, handler);
+    }
+
+    /// GETメソッドのルーティングを追加する
+    pub fn get(&mut self, path: &str, handler: T) {
+        self.add_route(Method::Get, path, handler);
+    }
+
+    /// POSTメソッドのルーティングを追加する
+    pub fn post(&mut self, path: &str, handler: T) {
+        self.add_route(Method::Post, path, handler);
+    }
+
+    /// PUTメソッドのルーティングを追加する
+    pub fn put(&mut self, path: &str, handler: T) {
+        self.add_route(Method::Put, path, handler);
+    }
+
+    /// 指定されたルーティングを解決する
+    pub fn resolve(&self, method: Method, path: &str) -> Option<&Route<T>> {
+        self.routes
+            .iter()
+            .find(|r| r.is_match(&method, path))
+    }
+
+    /// ルーティングを追加する
+    fn add_route(&mut self, method: Method, path: &str, handler: T) {
+        let route = Route {
+            method: method,
+            path: path.to_owned(),
+            handler: Box::new(handler),
+        };
+        self.routes.push(route);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use hyper::method::*;
+    use hyper::server::*;
+    use super::*;
+
+    #[test]
+    fn test_route_is_match() {
+        let r = Route {
+            method: Method::Get,
+            path: "/foo".to_owned(),
+            handler: Box::new(()),
+        };
+
+        assert!(r.is_match(&Method::Get, "/foo"));
+        assert!(!r.is_match(&Method::Post, "/foo"));
+    }
+
+    #[test]
+    fn test_router_delete() {
+        let mut r = Router::new();
+        r.delete("/delete", |_: Request, _: Response| ());
+
+        assert!(r.resolve(Method::Delete, "/delete").is_some());
+        assert!(r.resolve(Method::Delete, "/foo").is_none());
+        assert!(r.resolve(Method::Get, "/delete").is_none());
+    }
+
+    #[test]
+    fn test_router_get() {
+        let mut r = Router::new();
+        r.get("/get", |_: Request, _: Response| ());
+
+        assert!(r.resolve(Method::Get, "/get").is_some());
+        assert!(r.resolve(Method::Get, "/foo").is_none());
+        assert!(r.resolve(Method::Post, "/get").is_none());
+    }
+
+    #[test]
+    fn test_router_post() {
+        let mut r = Router::new();
+        r.post("/post", |_: Request, _: Response| ());
+
+        assert!(r.resolve(Method::Post, "/post").is_some());
+        assert!(r.resolve(Method::Post, "/foo").is_none());
+        assert!(r.resolve(Method::Get, "/post").is_none());
+    }
+
+    #[test]
+    fn test_router_put() {
+        let mut r = Router::new();
+        r.put("/put", |_: Request, _: Response| ());
+
+        assert!(r.resolve(Method::Put, "/put").is_some());
+        assert!(r.resolve(Method::Put, "/foo").is_none());
+        assert!(r.resolve(Method::Get, "/put").is_none());
+    }
 }
