@@ -118,4 +118,19 @@ mod tests {
         assert!(r.resolve(Method::Put, "/foo").is_none());
         assert!(r.resolve(Method::Get, "/put").is_none());
     }
+
+    #[test]
+    fn test_router_multi_route() {
+        fn handler(_: Request, _: Response) {
+            ()
+        }
+
+        let mut r = Router::new();
+        r.get("/route1", handler);
+        r.get("/route2", handler);
+
+        assert!(r.resolve(Method::Get, "/route1").is_some());
+        assert!(r.resolve(Method::Get, "/route2").is_some());
+        assert!(r.resolve(Method::Get, "/foo").is_none());
+    }
 }
