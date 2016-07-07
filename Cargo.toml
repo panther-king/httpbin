@@ -5,3 +5,8 @@ authors = ["Taro Yamashita <taro.ymst@gmail.com>"]
 
 [dependencies]
 hyper = "0.9.6"
+
+[[bin]]
+name = "httpbin"
+test = false
+doc = false
