@@ -18,7 +18,7 @@ const TOP: &'static str = r#"<!doctype html>
 </html>
 "#;
 
-pub fn index(_: Request, mut res: Response) {
+pub fn index_handler(_: Request, mut res: Response) {
     let mime = Mime(TopLevel::Text, SubLevel::Html, vec![]);
     let body = TOP.as_bytes();
 
