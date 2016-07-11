@@ -1,16 +1,12 @@
 extern crate hyper;
+extern crate httpbin;
 
-use std::io::Write;
-use hyper::server::{Server, Request, Response};
+use hyper::server::Server;
+use httpbin::dispatcher::dispatch;
 
 fn main() {
-    fn index(_: Request, res: Response) {
-        let mut res = res.start().unwrap();
-        res.write_all(b"").unwrap();
-    }
-
     Server::http("0.0.0.0:8888")
         .unwrap()
-        .handle(index)
+        .handle(dispatch)
         .unwrap();
 }

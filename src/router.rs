@@ -8,6 +8,10 @@ pub struct Route<T> {
 }
 
 impl<T> Route<T> {
+    pub fn handler(&self) -> &Box<T> {
+        &self.handler
+    }
+
     /// 自身のルーティングとマッチするか判定する
     pub fn is_match(&self, method: &Method, path: &str) -> bool {
         self.method == *method && self.path == path
@@ -19,6 +23,7 @@ pub struct Router<T> {
 }
 
 impl<T: Handler> Router<T> {
+    /// Routerオブジェクトを生成する
     pub fn new() -> Router<T> {
         Router { routes: Vec::new() }
     }
@@ -44,10 +49,10 @@ impl<T: Handler> Router<T> {
     }
 
     /// 指定されたルーティングを解決する
-    pub fn resolve(&self, method: Method, path: &str) -> Option<&Route<T>> {
+    pub fn resolve(&self, method: &Method, path: &str) -> Option<&Route<T>> {
         self.routes
             .iter()
-            .find(|r| r.is_match(&method, path))
+            .find(|r| r.is_match(method, path))
     }
 
     /// ルーティングを追加する
@@ -84,9 +89,9 @@ mod tests {
         let mut r = Router::new();
         r.delete("/delete", |_: Request, _: Response| ());
 
-        assert!(r.resolve(Method::Delete, "/delete").is_some());
-        assert!(r.resolve(Method::Delete, "/foo").is_none());
-        assert!(r.resolve(Method::Get, "/delete").is_none());
+        assert!(r.resolve(&Method::Delete, "/delete").is_some());
+        assert!(r.resolve(&Method::Delete, "/foo").is_none());
+        assert!(r.resolve(&Method::Get, "/delete").is_none());
     }
 
     #[test]
@@ -94,9 +99,9 @@ mod tests {
         let mut r = Router::new();
         r.get("/get", |_: Request, _: Response| ());
 
-        assert!(r.resolve(Method::Get, "/get").is_some());
-        assert!(r.resolve(Method::Get, "/foo").is_none());
-        assert!(r.resolve(Method::Post, "/get").is_none());
+        assert!(r.resolve(&Method::Get, "/get").is_some());
+        assert!(r.resolve(&Method::Get, "/foo").is_none());
+        assert!(r.resolve(&Method::Post, "/get").is_none());
     }
 
     #[test]
@@ -104,9 +109,9 @@ mod tests {
         let mut r = Router::new();
         r.post("/post", |_: Request, _: Response| ());
 
-        assert!(r.resolve(Method::Post, "/post").is_some());
-        assert!(r.resolve(Method::Post, "/foo").is_none());
-        assert!(r.resolve(Method::Get, "/post").is_none());
+        assert!(r.resolve(&Method::Post, "/post").is_some());
+        assert!(r.resolve(&Method::Post, "/foo").is_none());
+        assert!(r.resolve(&Method::Get, "/post").is_none());
     }
 
     #[test]
@@ -114,9 +119,9 @@ mod tests {
         let mut r = Router::new();
         r.put("/put", |_: Request, _: Response| ());
 
-        assert!(r.resolve(Method::Put, "/put").is_some());
-        assert!(r.resolve(Method::Put, "/foo").is_none());
-        assert!(r.resolve(Method::Get, "/put").is_none());
+        assert!(r.resolve(&Method::Put, "/put").is_some());
+        assert!(r.resolve(&Method::Put, "/foo").is_none());
+        assert!(r.resolve(&Method::Get, "/put").is_none());
     }
 
     #[test]
@@ -129,8 +134,8 @@ mod tests {
         r.get("/route1", handler);
         r.get("/route2", handler);
 
-        assert!(r.resolve(Method::Get, "/route1").is_some());
-        assert!(r.resolve(Method::Get, "/route2").is_some());
-        assert!(r.resolve(Method::Get, "/foo").is_none());
+        assert!(r.resolve(&Method::Get, "/route1").is_some());
+        assert!(r.resolve(&Method::Get, "/route2").is_some());
+        assert!(r.resolve(&Method::Get, "/foo").is_none());
     }
 }
