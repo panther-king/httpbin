@@ -5,6 +5,7 @@ authors = ["Taro Yamashita <taro.ymst@gmail.com>"]
 
 [dependencies]
 hyper = "0.9.6"
+rustc-serialize = "0.3.19"
 
 [[bin]]
 name = "httpbin"
