@@ -8,6 +8,10 @@ pub struct Route<T> {
 }
 
 impl<T> Route<T> {
+    pub fn handler(&self) -> &Box<T> {
+        &self.handler
+    }
+
     /// 自身のルーティングとマッチするか判定する
     pub fn is_match(&self, method: &Method, path: &str) -> bool {
         self.method == *method && self.path == path
