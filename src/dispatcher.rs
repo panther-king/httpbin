@@ -11,6 +11,7 @@ pub fn dispatch(req: Request, mut res: Response) {
 
     router.get("/", handler::index_handler);
     router.get("/ip", handler::ip_handler);
+    router.get("/user-agent", handler::user_agent_handler);
 
     match router.resolve(&req.method, parse(&req.uri)) {
         Some(ref r) => {
