@@ -8,7 +8,9 @@ use router::Router;
 /// ルーティングを定義して、対応するハンドラを実行する
 pub fn dispatch(req: Request, mut res: Response) {
     let mut router = Router::new();
+
     router.get("/", handler::index_handler);
+    router.get("/ip", handler::ip_handler);
 
     match router.resolve(&req.method, parse(&req.uri)) {
         Some(ref r) => {

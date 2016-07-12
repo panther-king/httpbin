@@ -4,6 +4,7 @@ use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
 
+/// INDEXページHTML
 const TOP: &'static str = r#"<!doctype html>
 <html>
   <head>
@@ -13,11 +14,13 @@ const TOP: &'static str = r#"<!doctype html>
   <body>
     <ul>
       <li><a href="/"><code>/</code></a> This page.</li>
+      <li><a href="/ip"><code>/ip</code></a> Returns Origin IP.</li>
     </ul>
   </body>
 </html>
 "#;
 
+/// INDEXページハンドラ
 pub fn index_handler(_: Request, mut res: Response) {
     let mime = Mime(TopLevel::Text, SubLevel::Html, vec![]);
     let body = TOP.as_bytes();
