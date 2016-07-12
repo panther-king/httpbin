@@ -16,6 +16,7 @@ const TOP: &'static str = r#"<!doctype html>
       <li><a href="/"><code>/</code></a> This page.</li>
       <li><a href="/ip"><code>/ip</code></a> Returns Origin IP.</li>
       <li><a href="/user-agent"><code>/user-agent</code></a> Returns user-agent.</li>
+      <li><a href="/headers"><code>/headers</code></a> Returns header dict.</li>
     </ul>
   </body>
 </html>
