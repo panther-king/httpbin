@@ -4,7 +4,8 @@ version = "0.1.0"
 authors = ["Taro Yamashita <taro.ymst@gmail.com>"]
 
 [dependencies]
-hyper = "0.9.6"
+hyper = "0.9.9"
+rustc-serialize = "0.3.19"
 
 [[bin]]
 name = "httpbin"
