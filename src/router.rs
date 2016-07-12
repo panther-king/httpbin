@@ -1,14 +1,16 @@
 use hyper::method::Method;
-use hyper::server::Handler;
+use hyper::server::{Request, Response};
 
-pub struct Route<T> {
+pub type Handler = fn(Request, Response);
+
+pub struct Route {
     method: Method,
     path: String,
-    handler: Box<T>,
+    handler: Handler,
 }
 
-impl<T> Route<T> {
-    pub fn handler(&self) -> &Box<T> {
+impl Route {
+    pub fn handler(&self) -> &Handler {
         &self.handler
     }
 
@@ -18,49 +20,49 @@ impl<T> Route<T> {
     }
 }
 
-pub struct Router<T> {
-    routes: Vec<Route<T>>,
+pub struct Router {
+    routes: Vec<Route>,
 }
 
-impl<T: Handler> Router<T> {
+impl Router {
     /// Routerオブジェクトを生成する
-    pub fn new() -> Router<T> {
+    pub fn new() -> Router {
         Router { routes: Vec::new() }
     }
 
     /// DELETEメソッドのルーティングを追加する
-    pub fn delete(&mut self, path: &str, handler: T) {
+    pub fn delete(&mut self, path: &str, handler: Handler) {
         self.add_route(Method::Delete, path, handler);
     }
 
     /// GETメソッドのルーティングを追加する
-    pub fn get(&mut self, path: &str, handler: T) {
+    pub fn get(&mut self, path: &str, handler: Handler) {
         self.add_route(Method::Get, path, handler);
     }
 
     /// POSTメソッドのルーティングを追加する
-    pub fn post(&mut self, path: &str, handler: T) {
+    pub fn post(&mut self, path: &str, handler: Handler) {
         self.add_route(Method::Post, path, handler);
     }
 
     /// PUTメソッドのルーティングを追加する
-    pub fn put(&mut self, path: &str, handler: T) {
+    pub fn put(&mut self, path: &str, handler: Handler) {
         self.add_route(Method::Put, path, handler);
     }
 
     /// 指定されたルーティングを解決する
-    pub fn resolve(&self, method: &Method, path: &str) -> Option<&Route<T>> {
+    pub fn resolve(&self, method: &Method, path: &str) -> Option<&Route> {
         self.routes
             .iter()
             .find(|r| r.is_match(method, path))
     }
 
     /// ルーティングを追加する
-    fn add_route(&mut self, method: Method, path: &str, handler: T) {
+    fn add_route(&mut self, method: Method, path: &str, handler: Handler) {
         let route = Route {
             method: method,
             path: path.to_owned(),
-            handler: Box::new(handler),
+            handler: handler,
         };
         self.routes.push(route);
     }
@@ -68,16 +70,20 @@ impl<T: Handler> Router<T> {
 
 #[cfg(test)]
 mod tests {
-    use hyper::method::*;
-    use hyper::server::*;
+    use hyper::method::Method;
+    use hyper::server::{Request, Response};
     use super::*;
+
+    fn mock_handler(_: Request, _: Response) {
+        ()
+    }
 
     #[test]
     fn test_route_is_match() {
         let r = Route {
             method: Method::Get,
             path: "/foo".to_owned(),
-            handler: Box::new(()),
+            handler: mock_handler,
         };
 
         assert!(r.is_match(&Method::Get, "/foo"));
@@ -87,7 +93,7 @@ mod tests {
     #[test]
     fn test_router_delete() {
         let mut r = Router::new();
-        r.delete("/delete", |_: Request, _: Response| ());
+        r.delete("/delete", mock_handler);
 
         assert!(r.resolve(&Method::Delete, "/delete").is_some());
         assert!(r.resolve(&Method::Delete, "/foo").is_none());
@@ -97,7 +103,7 @@ mod tests {
     #[test]
     fn test_router_get() {
         let mut r = Router::new();
-        r.get("/get", |_: Request, _: Response| ());
+        r.get("/get", mock_handler);
 
         assert!(r.resolve(&Method::Get, "/get").is_some());
         assert!(r.resolve(&Method::Get, "/foo").is_none());
@@ -107,7 +113,7 @@ mod tests {
     #[test]
     fn test_router_post() {
         let mut r = Router::new();
-        r.post("/post", |_: Request, _: Response| ());
+        r.post("/post", mock_handler);
 
         assert!(r.resolve(&Method::Post, "/post").is_some());
         assert!(r.resolve(&Method::Post, "/foo").is_none());
@@ -117,7 +123,7 @@ mod tests {
     #[test]
     fn test_router_put() {
         let mut r = Router::new();
-        r.put("/put", |_: Request, _: Response| ());
+        r.put("/put", mock_handler);
 
         assert!(r.resolve(&Method::Put, "/put").is_some());
         assert!(r.resolve(&Method::Put, "/foo").is_none());
@@ -126,13 +132,9 @@ mod tests {
 
     #[test]
     fn test_router_multi_route() {
-        fn handler(_: Request, _: Response) {
-            ()
-        }
-
         let mut r = Router::new();
-        r.get("/route1", handler);
-        r.get("/route2", handler);
+        r.get("/route1", mock_handler);
+        r.get("/route2", mock_handler);
 
         assert!(r.resolve(&Method::Get, "/route1").is_some());
         assert!(r.resolve(&Method::Get, "/route2").is_some());
