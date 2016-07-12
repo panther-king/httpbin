@@ -12,6 +12,9 @@ const TOP: &'static str = r#"<!doctype html>
     <title>httpbin.org clone with Rust</title>
   </head>
   <body>
+    <h1>HTTP Request &amp; Response Service</h1>
+    <p>This is clone of <a href="http://httpbin.org">httpbin.org</a> with Rust.</p>
+    <h2>ENDPOINTS</h2>
     <ul>
       <li><a href="/"><code>/</code></a> This page.</li>
       <li><a href="/ip"><code>/ip</code></a> Returns Origin IP.</li>
