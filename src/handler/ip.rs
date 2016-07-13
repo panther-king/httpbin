@@ -11,18 +11,16 @@ pub struct Ip {
     origin: String,
 }
 
+impl Ip {
+    pub fn new(sock: SocketAddr) -> Ip {
+        Ip { origin: ip_addr(sock) }
+    }
+}
+
 /// IPアドレスハンドラ
 pub fn ip_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
-    let octets = match req.remote_addr {
-        SocketAddr::V4(sock) => sock.ip().octets(),
-        _ => [0, 0, 0, 0],
-    };
-    let address = octets.into_iter()
-        .map(|o| format!("{}", o))
-        .collect::<Vec<String>>()
-        .join(".");
-    let ip = Ip { origin: address };
+    let ip = Ip::new(req.remote_addr);
     let json = json::encode(&ip).unwrap();
     let body = json.as_bytes();
 
@@ -32,4 +30,50 @@ pub fn ip_handler(req: Request, mut res: Response) {
     let mut res = res.start().unwrap();
 
     res.write_all(body).unwrap();
+}
+
+/// IPアドレスをフォーマットする
+pub fn ip_addr(sock: SocketAddr) -> String {
+    match sock {
+        SocketAddr::V6(addr) => {
+            addr.ip()
+                .segments()
+                .iter()
+                .map(|s| format!("{}", s))
+                .collect::<Vec<String>>()
+                .join(":")
+        }
+        SocketAddr::V4(addr) => {
+            addr.ip()
+                .octets()
+                .iter()
+                .map(|o| format!("{}", o))
+                .collect::<Vec<String>>()
+                .join(".")
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net;
+    use super::*;
+
+    #[test]
+    fn test_ipv4_addr() {
+        let v4 = net::Ipv4Addr::new(127, 0, 0, 1);
+        let addr = net::IpAddr::V4(v4);
+        let sock = net::SocketAddr::new(addr, 80);
+
+        assert_eq!(ip_addr(sock), "127.0.0.1");
+    }
+
+    #[test]
+    fn test_ipv6_addr() {
+        let v6 = net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
+        let addr = net::IpAddr::V6(v6);
+        let sock = net::SocketAddr::new(addr, 80);
+
+        assert_eq!(ip_addr(sock), "0:0:0:0:0:0:0:1");
+    }
 }
