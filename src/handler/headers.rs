@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::Write;
 
-use hyper::header::{ContentType, ContentLength};
+use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
 use rustc_serialize::json;

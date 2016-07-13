@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::io::Write;
 
-use hyper::header::{ContentType, ContentLength, UserAgent as UA};
+use hyper::header::{ContentLength, ContentType, UserAgent as UA};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
 use rustc_serialize::json::{Json, ToJson};
