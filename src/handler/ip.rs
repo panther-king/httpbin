@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
-use rustc_serialize::json;
+use rustc_serialize::json::{self, Json, ToJson};
 
 #[derive(RustcEncodable)]
 pub struct Ip {
@@ -14,6 +14,16 @@ pub struct Ip {
 impl Ip {
     pub fn new(sock: SocketAddr) -> Ip {
         Ip { origin: ip_addr(sock) }
+    }
+
+    /// プロパティをJSONオブジェクトとして返す
+    pub fn as_json(&self) -> Json {
+        self.origin.to_json()
+    }
+
+    /// JSONのキーとなるプロパティ名を返す
+    pub fn key(&self) -> String {
+        "origin".to_owned()
     }
 }
 
@@ -59,21 +69,47 @@ mod tests {
     use std::net;
     use super::*;
 
-    #[test]
-    fn test_ipv4_addr() {
+    fn ipv4_sock() -> net::SocketAddr {
         let v4 = net::Ipv4Addr::new(127, 0, 0, 1);
         let addr = net::IpAddr::V4(v4);
-        let sock = net::SocketAddr::new(addr, 80);
+
+        net::SocketAddr::new(addr, 80)
+    }
+
+    fn ipv6_sock() -> net::SocketAddr {
+        let v6 = net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
+        let addr = net::IpAddr::V6(v6);
+
+        net::SocketAddr::new(addr, 80)
+    }
+
+    #[test]
+    fn test_ipv4_addr() {
+        let sock = ipv4_sock();
 
         assert_eq!(ip_addr(sock), "127.0.0.1");
     }
 
     #[test]
     fn test_ipv6_addr() {
-        let v6 = net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
-        let addr = net::IpAddr::V6(v6);
-        let sock = net::SocketAddr::new(addr, 80);
+        let sock = ipv6_sock();
 
         assert_eq!(ip_addr(sock), "0:0:0:0:0:0:0:1");
+    }
+
+    #[test]
+    fn test_ip_key() {
+        let sock = ipv4_sock();
+        let ip = Ip::new(sock);
+
+        assert_eq!(ip.key(), "origin");
+    }
+
+    #[test]
+    fn test_ip_as_json() {
+        let sock = ipv4_sock();
+        let ip = Ip::new(sock);
+
+        assert_eq!(ip.as_json().to_string(), "\"127.0.0.1\"");
     }
 }
