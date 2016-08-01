@@ -4,7 +4,7 @@ use std::io::Write;
 use hyper::header::{ContentLength, ContentType, Headers};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
-use rustc_serialize::json;
+use rustc_serialize::json::{self, Json, ToJson};
 
 #[derive(RustcEncodable)]
 pub struct HeaderCollection {
@@ -14,6 +14,16 @@ pub struct HeaderCollection {
 impl HeaderCollection {
     pub fn new(headers: Headers) -> HeaderCollection {
         HeaderCollection { headers: headers_map(headers) }
+    }
+
+    /// プロパティをJSONオブジェクトとして返す
+    pub fn as_json(&self) -> Json {
+        self.headers.to_json()
+    }
+
+    /// JSONのキーとなるプロパティ名を返す
+    pub fn key(&self) -> String {
+        "headers".to_owned()
     }
 }
 
@@ -61,5 +71,27 @@ mod tests {
 
         assert_eq!(vec.get("Host").unwrap(), "example.com");
         assert!(vec.get("User-Agent").is_none());
+    }
+
+    #[test]
+    fn test_headercollection_key() {
+        let headers = header::Headers::new();
+        let hc = HeaderCollection::new(headers);
+
+        assert_eq!(hc.key(), "headers");
+    }
+
+    #[test]
+    fn test_headercollection_as_json() {
+        let mut headers = header::Headers::new();
+
+        headers.set(header::Host {
+            hostname: "example.com".to_owned(),
+            port: None,
+        });
+
+        let hc = HeaderCollection::new(headers);
+
+        assert_eq!(hc.as_json().to_string(), "{\"Host\":\"example.com\"}");
     }
 }
