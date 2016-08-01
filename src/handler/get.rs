@@ -18,14 +18,10 @@ pub struct Get {
 
 impl Get {
     pub fn new(req: Request) -> Get {
-        let args = parse_query(&req.uri);
-        let headers = headers::HeaderCollection::new(req.headers);
-        let origin = ip::Ip::new(req.remote_addr);
-
         Get {
-            args: args,
-            headers: headers,
-            origin: origin,
+            args: parse_query(&req.uri),
+            headers: headers::HeaderCollection::new(req.headers),
+            origin: ip::Ip::new(req.remote_addr),
         }
     }
 }
@@ -35,11 +31,12 @@ impl ToJson for Get {
         let mut query = BTreeMap::new();
 
         for (k, v) in &self.args {
-            if v.len() == 1 {
-                query.insert(k.to_owned(), v[0].to_owned().to_json());
-            } else {
-                query.insert(k.to_owned(), v.to_json());
-            }
+            let value = match v.len() {
+                1 => v[0].to_owned().to_json(),
+                _ => v.to_json(),
+            };
+
+            query.insert(k.to_owned(), value);
         }
 
         let mut args = BTreeMap::new();
