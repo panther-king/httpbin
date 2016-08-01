@@ -1,12 +1,12 @@
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::io::Write;
 
 use hyper::header::{ContentLength, ContentType, Headers};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
-use rustc_serialize::json::{self, Json, ToJson};
+use rustc_serialize::json::{Json, ToJson};
 
-#[derive(RustcEncodable)]
 pub struct HeaderCollection {
     headers: HashMap<String, String>,
 }
@@ -27,11 +27,20 @@ impl HeaderCollection {
     }
 }
 
+impl ToJson for HeaderCollection {
+    fn to_json(&self) -> Json {
+        let mut d = BTreeMap::new();
+
+        d.insert(self.key(), self.as_json());
+        Json::Object(d)
+    }
+}
+
 /// Header一覧ハンドラ
 pub fn headers_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
     let hc = HeaderCollection::new(&req.headers);
-    let json = json::encode(&hc).unwrap();
+    let json = hc.to_json().pretty().to_string();
     let body = json.as_bytes();
 
     res.headers_mut().set(ContentType(mime));

@@ -1,12 +1,12 @@
+use std::collections::BTreeMap;
 use std::io::Write;
 use std::net::SocketAddr;
 
 use hyper::header::{ContentLength, ContentType};
 use hyper::mime::{Mime, SubLevel, TopLevel};
 use hyper::server::{Request, Response};
-use rustc_serialize::json::{self, Json, ToJson};
+use rustc_serialize::json::{Json, ToJson};
 
-#[derive(RustcEncodable)]
 pub struct Ip {
     origin: String,
 }
@@ -27,11 +27,20 @@ impl Ip {
     }
 }
 
+impl ToJson for Ip {
+    fn to_json(&self) -> Json {
+        let mut d = BTreeMap::new();
+
+        d.insert(self.key(), self.as_json());
+        Json::Object(d)
+    }
+}
+
 /// IPアドレスハンドラ
 pub fn ip_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
     let ip = Ip::new(&req.remote_addr);
-    let json = json::encode(&ip).unwrap();
+    let json = ip.to_json().pretty().to_string();
     let body = json.as_bytes();
 
     res.headers_mut().set(ContentType(mime));

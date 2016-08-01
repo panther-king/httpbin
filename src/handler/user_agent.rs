@@ -31,7 +31,7 @@ impl ToJson for UserAgent {
 pub fn user_agent_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
     let ua = UserAgent::new(&req.headers);
-    let json = ua.to_json().to_string();
+    let json = ua.to_json().pretty().to_string();
     let body = json.as_bytes();
 
     res.headers_mut().set(ContentType(mime));

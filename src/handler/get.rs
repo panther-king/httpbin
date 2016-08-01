@@ -57,7 +57,7 @@ impl ToJson for Get {
 pub fn get_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
     let get = Get::new(req);
-    let json = get.to_json().to_string();
+    let json = get.to_json().pretty().to_string();
     let body = json.as_bytes();
 
     res.headers_mut().set(ContentType(mime));
