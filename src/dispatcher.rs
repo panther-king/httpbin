@@ -13,6 +13,7 @@ pub fn dispatch(req: Request, mut res: Response) {
     router.get("/ip", handler::ip_handler);
     router.get("/user-agent", handler::user_agent_handler);
     router.get("/headers", handler::headers_handler);
+    router.get("/get", handler::get_handler);
 
     match router.resolve(&req.method, parse(&req.uri)) {
         Some(ref r) => {
