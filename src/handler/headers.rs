@@ -65,6 +65,7 @@ pub fn headers_map(headers: &Headers) -> HashMap<String, String> {
 #[cfg(test)]
 mod tests {
     use hyper::header;
+    use rustc_serialize::json::ToJson;
     use super::*;
 
     #[test]
@@ -101,6 +102,21 @@ mod tests {
 
         let hc = HeaderCollection::new(&headers);
 
-        assert_eq!(hc.as_json().to_string(), "{\"Host\":\"example.com\"}");
+        assert_eq!(hc.as_json().to_string(), r#"{"Host":"example.com"}"#);
+    }
+
+    #[test]
+    fn test_headercollection_to_json() {
+        let mut headers = header::Headers::new();
+
+        headers.set(header::Host {
+            hostname: "example.com".to_owned(),
+            port: None,
+        });
+
+        let hc = HeaderCollection::new(&headers);
+
+        assert_eq!(hc.to_json().to_string(),
+                   r#"{"headers":{"Host":"example.com"}}"#);
     }
 }

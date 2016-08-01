@@ -76,6 +76,7 @@ pub fn ip_addr(sock: &SocketAddr) -> String {
 #[cfg(test)]
 mod tests {
     use std::net;
+    use rustc_serialize::json::ToJson;
     use super::*;
 
     fn ipv4_sock() -> net::SocketAddr {
@@ -119,6 +120,14 @@ mod tests {
         let sock = ipv4_sock();
         let ip = Ip::new(&sock);
 
-        assert_eq!(ip.as_json().to_string(), "\"127.0.0.1\"");
+        assert_eq!(ip.as_json().to_string(), r#""127.0.0.1""#);
+    }
+
+    #[test]
+    fn test_ip_to_json() {
+        let sock = ipv4_sock();
+        let ip = Ip::new(&sock);
+
+        assert_eq!(ip.to_json().to_string(), r#"{"origin":"127.0.0.1"}"#);
     }
 }

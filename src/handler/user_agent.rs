@@ -52,8 +52,8 @@ pub fn user_agent(headers: &Headers) -> String {
 
 #[cfg(test)]
 mod tests {
-    use rustc_serialize::json::ToJson;
     use hyper::header;
+    use rustc_serialize::json::ToJson;
     use super::*;
 
     #[test]
@@ -76,6 +76,6 @@ mod tests {
         let ua = UserAgent { agent: "Firefox".to_owned() };
         let json = ua.to_json().to_string();
 
-        assert_eq!(json, "{\"user-agent\":\"Firefox\"}");
+        assert_eq!(json, r#"{"user-agent":"Firefox"}"#);
     }
 }
