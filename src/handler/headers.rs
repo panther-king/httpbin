@@ -12,7 +12,7 @@ pub struct HeaderCollection {
 }
 
 impl HeaderCollection {
-    pub fn new(headers: Headers) -> HeaderCollection {
+    pub fn new(headers: &Headers) -> HeaderCollection {
         HeaderCollection { headers: headers_map(headers) }
     }
 
@@ -30,7 +30,7 @@ impl HeaderCollection {
 /// Header一覧ハンドラ
 pub fn headers_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
-    let hc = HeaderCollection::new(req.headers);
+    let hc = HeaderCollection::new(&req.headers);
     let json = json::encode(&hc).unwrap();
     let body = json.as_bytes();
 
@@ -43,7 +43,7 @@ pub fn headers_handler(req: Request, mut res: Response) {
 }
 
 /// リクエストヘッダをkey/value形式に変換する
-pub fn headers_map(headers: Headers) -> HashMap<String, String> {
+pub fn headers_map(headers: &Headers) -> HashMap<String, String> {
     let mut hm = HashMap::new();
 
     for h in headers.iter() {
@@ -67,7 +67,7 @@ mod tests {
             port: None,
         });
 
-        let vec = headers_map(headers);
+        let vec = headers_map(&headers);
 
         assert_eq!(vec.get("Host").unwrap(), "example.com");
         assert!(vec.get("User-Agent").is_none());
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_headercollection_key() {
         let headers = header::Headers::new();
-        let hc = HeaderCollection::new(headers);
+        let hc = HeaderCollection::new(&headers);
 
         assert_eq!(hc.key(), "headers");
     }
@@ -90,7 +90,7 @@ mod tests {
             port: None,
         });
 
-        let hc = HeaderCollection::new(headers);
+        let hc = HeaderCollection::new(&headers);
 
         assert_eq!(hc.as_json().to_string(), "{\"Host\":\"example.com\"}");
     }

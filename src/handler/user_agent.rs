@@ -13,7 +13,7 @@ pub struct UserAgent {
 }
 
 impl UserAgent {
-    pub fn new(headers: Headers) -> UserAgent {
+    pub fn new(headers: &Headers) -> UserAgent {
         UserAgent { agent: user_agent(headers) }
     }
 }
@@ -30,7 +30,7 @@ impl ToJson for UserAgent {
 /// User-Agentハンドラ
 pub fn user_agent_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
-    let ua = UserAgent::new(req.headers);
+    let ua = UserAgent::new(&req.headers);
     let json = ua.to_json().to_string();
     let body = json.as_bytes();
 
@@ -43,7 +43,7 @@ pub fn user_agent_handler(req: Request, mut res: Response) {
 }
 
 /// HTTPヘッダからUser-Agentを取り出す
-pub fn user_agent(headers: Headers) -> String {
+pub fn user_agent(headers: &Headers) -> String {
     match headers.get::<UA>() {
         Some(&UA(ref s)) => s.to_owned(),
         None => UNKNOWN.to_owned(),
@@ -61,14 +61,14 @@ mod tests {
         let mut headers = header::Headers::new();
         headers.set(header::UserAgent("Firefox".to_owned()));
 
-        assert_eq!(user_agent(headers), "Firefox");
+        assert_eq!(user_agent(&headers), "Firefox");
     }
 
     #[test]
     fn test_user_agent_not_exists() {
         let headers = header::Headers::new();
 
-        assert_eq!(user_agent(headers), "Unknown User-Agent");
+        assert_eq!(user_agent(&headers), "Unknown User-Agent");
     }
 
     #[test]

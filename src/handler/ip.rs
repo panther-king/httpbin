@@ -12,8 +12,8 @@ pub struct Ip {
 }
 
 impl Ip {
-    pub fn new(sock: SocketAddr) -> Ip {
-        Ip { origin: ip_addr(sock) }
+    pub fn new(sock: &SocketAddr) -> Ip {
+        Ip { origin: ip_addr(&sock) }
     }
 
     /// プロパティをJSONオブジェクトとして返す
@@ -30,7 +30,7 @@ impl Ip {
 /// IPアドレスハンドラ
 pub fn ip_handler(req: Request, mut res: Response) {
     let mime = Mime(TopLevel::Application, SubLevel::Json, vec![]);
-    let ip = Ip::new(req.remote_addr);
+    let ip = Ip::new(&req.remote_addr);
     let json = json::encode(&ip).unwrap();
     let body = json.as_bytes();
 
@@ -43,8 +43,8 @@ pub fn ip_handler(req: Request, mut res: Response) {
 }
 
 /// IPアドレスをフォーマットする
-pub fn ip_addr(sock: SocketAddr) -> String {
-    match sock {
+pub fn ip_addr(sock: &SocketAddr) -> String {
+    match *sock {
         SocketAddr::V6(addr) => {
             addr.ip()
                 .segments()
@@ -87,20 +87,20 @@ mod tests {
     fn test_ipv4_addr() {
         let sock = ipv4_sock();
 
-        assert_eq!(ip_addr(sock), "127.0.0.1");
+        assert_eq!(ip_addr(&sock), "127.0.0.1");
     }
 
     #[test]
     fn test_ipv6_addr() {
         let sock = ipv6_sock();
 
-        assert_eq!(ip_addr(sock), "0:0:0:0:0:0:0:1");
+        assert_eq!(ip_addr(&sock), "0:0:0:0:0:0:0:1");
     }
 
     #[test]
     fn test_ip_key() {
         let sock = ipv4_sock();
-        let ip = Ip::new(sock);
+        let ip = Ip::new(&sock);
 
         assert_eq!(ip.key(), "origin");
     }
@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn test_ip_as_json() {
         let sock = ipv4_sock();
-        let ip = Ip::new(sock);
+        let ip = Ip::new(&sock);
 
         assert_eq!(ip.as_json().to_string(), "\"127.0.0.1\"");
     }
