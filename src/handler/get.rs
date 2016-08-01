@@ -1,10 +1,12 @@
 use std::collections::BTreeMap;
 use std::io::Write;
 
-use hyper::header::{ContentLength, ContentType};
+use hyper::header::{ContentLength, ContentType, Host};
 use hyper::mime::{Mime, SubLevel, TopLevel};
+use hyper::net::HttpStream;
 use hyper::server::{Request, Response};
 use hyper::uri::RequestUri;
+use openssl::ssl::SslStream;
 use rustc_serialize::json::{Json, ToJson};
 
 use handler::headers;
@@ -14,14 +16,16 @@ pub struct Get {
     args: BTreeMap<String, Vec<String>>,
     headers: headers::HeaderCollection,
     origin: ip::Ip,
+    url: String,
 }
 
 impl Get {
     pub fn new(req: Request) -> Get {
         Get {
             args: parse_query(&req.uri),
-            headers: headers::HeaderCollection::new(req.headers),
-            origin: ip::Ip::new(req.remote_addr),
+            headers: headers::HeaderCollection::new(&req.headers),
+            origin: ip::Ip::new(&req.remote_addr),
+            url: absolute_url(&req),
         }
     }
 }
@@ -44,6 +48,7 @@ impl ToJson for Get {
         args.insert("args".to_owned(), query.to_json());
         args.insert(self.headers.key(), self.headers.as_json());
         args.insert(self.origin.key(), self.origin.as_json());
+        args.insert("url".to_owned(), self.url.to_json());
         Json::Object(args)
     }
 }
@@ -61,6 +66,24 @@ pub fn get_handler(req: Request, mut res: Response) {
     let mut res = res.start().unwrap();
 
     res.write_all(body).unwrap();
+}
+
+/// リクエスト情報から完全なURLを生成する
+pub fn absolute_url(req: &Request) -> String {
+    let scheme = match req.ssl::<SslStream<HttpStream>>() {
+        Some(_) => "https",
+        None => "http",
+    };
+    let domain = match req.headers.get::<Host>() {
+        Some(h) => h.hostname.to_owned(),
+        None => "".to_owned(),
+    };
+    let parameter = match req.uri {
+        RequestUri::AbsolutePath(ref s) => s.to_owned(),
+        _ => unreachable!(),
+    };
+
+    format!("{}://{}{}", scheme, domain, parameter)
 }
 
 /// クエリパラメータをkey/value形式にパースする
